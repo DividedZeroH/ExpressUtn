@@ -1,0 +1,27 @@
+# Dependencias
+node_modules/
+app/node_modules/
+
+# Variables de entorno (contienen credenciales)
+.env
+app/.env
+*.env
+
+# Logs
+*.log
+dev-start-output.log
+
+# AdminJS build cache
+.adminjs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code (settings locales, no compartir)
+.claude/settings.local.json
+
+# Editor
+.vscode/
+*.suo
+*.user

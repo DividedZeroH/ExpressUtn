@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bar — Gestión de Ventas y Barras</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── Tokens ─────────────────────────────────────────────── */
+    :root {
+      --bg-base:    #080808;
+      --bg-surface: #101010;
+      --bg-card:    #161616;
+      --bg-elevated:#1e1e1e;
+      --bg-hover:   #242424;
+
+      --border:       rgba(255,255,255,0.07);
+      --border-hover: rgba(255,255,255,0.13);
+      --border-focus: rgba(162,89,255,0.5);
+
+      --text-primary:   #ebebeb;
+      --text-secondary: #888;
+      --text-muted:     #555;
+
+      --accent:       #a259ff;
+      --accent-dim:   rgba(162,89,255,0.12);
+      --accent-hover: #9245f0;
+
+      --green:     #3ecf8e;
+      --green-dim: rgba(62,207,142,0.12);
+      --amber:     #a259ff;
+      --amber-dim: rgba(162,89,255,0.12);
+      --blue:      #5b8af5;
+      --blue-dim:  rgba(91,138,245,0.12);
+      --red:       #f56565;
+
+      --radius-xs: 4px;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 20px;
+
+      --shadow-xs: 0 1px 2px rgba(0,0,0,0.5);
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.5);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.6);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,0.7);
+
+      --ease:   cubic-bezier(0.16,1,0.3,1);
+      --fast:   150ms;
+      --normal: 220ms;
+
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    /* ─── Reset ──────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.6;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; font-family: var(--font); border: none; background: none; }
+    input, select { font-family: var(--font); }
+    ul { list-style: none; }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ─── Navbar ─────────────────────────────────────────────── */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,8,8,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .nav__inner {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .nav__logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.2px;
+      color: var(--text-primary);
+      flex-shrink: 0;
+      margin-right: 32px;
+    }
+    .nav__logo-mark {
+      width: 26px;
+      height: 26px;
+      background: var(--accent);
+      border-radius: var(--radius-sm);
+      display: grid;
+      place-items: center;
+    }
+    .nav__logo-mark svg { width: 15px; height: 15px; }
+    .nav__links {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+    }
+    .nav__link {
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      color: var(--text-secondary);
+      transition: color var(--fast) var(--ease), background var(--fast) var(--ease);
+      font-weight: 450;
+    }
+    .nav__link:hover { color: var(--text-primary); background: var(--bg-elevated); }
+    .nav__link.active { color: var(--text-primary); }
+    .nav__actions { display: flex; align-items: center; gap: 8px; }
+    .nav__badge {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid rgba(162,89,255,0.2);
+    }
+
+    /* ─── Buttons ────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      transition: all var(--fast) var(--ease);
+      white-space: nowrap;
+      letter-spacing: -0.1px;
+    }
+    .btn svg { flex-shrink: 0; }
+
+    .btn-primary { background: var(--text-primary); color: var(--bg-base); }
+    .btn-primary:hover {
+      background: #d0d0d0;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-hover);
+    }
+    .btn-secondary:hover { background: var(--bg-elevated); }
+
+    .btn-accent { background: var(--accent); color: #f5f0ff; }
+    .btn-accent:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(162,89,255,0.35);
+    }
+
+    .btn-ghost { background: transparent; color: var(--text-secondary); padding: 6px 10px; }
+    .btn-ghost:hover { color: var(--text-primary); background: var(--bg-elevated); }
+
+    .btn-sm { padding: 5px 12px; font-size: 13px; }
+    .btn-lg { padding: 11px 22px; font-size: 15px; border-radius: var(--radius-md); }
+
+    /* ─── Hero ───────────────────────────────────────────────── */
+    .hero {
+      padding: 96px 0 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(162,89,255,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .hero__eyebrow::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.4; }
+    }
+    .hero__title {
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 700;
+      letter-spacing: -2.5px;
+      line-height: 1.05;
+      margin-bottom: 20px;
+      color: var(--text-primary);
+    }
+    .hero__title span { color: var(--text-muted); }
+    .hero__subtitle {
+      font-size: 18px;
+      color: var(--text-secondary);
+      max-width: 480px;
+      line-height: 1.6;
+      margin-bottom: 36px;
+      font-weight: 400;
+    }
+    .hero__actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 64px;
+      flex-wrap: wrap;
+    }
+
+    /* ─── Stats ──────────────────────────────────────────────── */
+    .stats {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 28px 0;
+      margin-bottom: 80px;
+    }
+    .stats__grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .stat { padding: 0 32px; border-right: 1px solid var(--border); }
+    .stat:first-child { padding-left: 0; }
+    .stat:last-child  { border-right: none; }
+    .stat__value {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: var(--text-primary);
+    }
+    .stat__label { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* ─── Section header ─────────────────────────────────────── */
+    .section-header { margin-bottom: 40px; }
+    .section-header__tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .section-header__tag::before {
+      content: '';
+      display: block;
+      width: 16px; height: 1px;
+      background: var(--border-hover);
+    }
+    .section-header__title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .section-header__sub { font-size: 15px; color: var(--text-secondary); max-width: 480px; }
+
+    /* ─── Cards ──────────────────────────────────────────────── */
+    .cards-section { padding: 0 0 80px; }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: border-color var(--normal) var(--ease),
+                  background var(--normal) var(--ease),
+                  transform var(--normal) var(--ease),
+                  box-shadow var(--normal) var(--ease);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      opacity: 0;
+      transition: opacity var(--normal) var(--ease);
+      background: radial-gradient(500px circle at var(--mx,50%) var(--my,50%), rgba(162,89,255,0.04), transparent 40%);
+    }
+    .card:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-elevated);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    .card:hover::after { opacity: 1; }
+
+    .card__header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card__icon {
+      width: 40px; height: 40px;
+      border-radius: var(--radius-md);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .card__icon svg { width: 18px; height: 18px; }
+    .card__icon--amber { background: var(--amber-dim);  color: var(--amber); }
+    .card__icon--green { background: var(--green-dim);  color: var(--green); }
+    .card__icon--blue  { background: var(--blue-dim);   color: var(--blue); }
+    .card__icon--muted { background: var(--bg-elevated); color: var(--text-secondary); }
+
+    .card__tag {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+    .tag--new    { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(162,89,255,0.2); }
+    .tag--beta   { background: var(--blue-dim);   color: var(--blue);   border: 1px solid rgba(91,138,245,0.2); }
+    .tag--stable { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(62,207,142,0.2); }
+    .tag--default{ background: var(--bg-elevated);color: var(--text-muted); border: 1px solid var(--border); }
+
+    .card__title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      letter-spacing: -0.3px;
+    }
+    .card__desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin-bottom: 20px;
+    }
+    .card__meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .card__count { font-size: 20px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.5px; }
+    .card__count-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .card__action {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      color: var(--text-muted);
+      transition: color var(--fast) var(--ease);
+    }
+    .card:hover .card__action { color: var(--accent); }
+    .card__action svg { width: 14px; height: 14px; }
+
+    /* ─── Feed ───────────────────────────────────────────────── */
+    .feed-section { padding: 0 0 80px; }
+    .feed-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 20px;
+      align-items: start;
+    }
+    .feed {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .feed__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .feed__title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .feed__filters { display: flex; gap: 2px; }
+    .feed__filter {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      transition: all var(--fast) var(--ease);
+    }
+    .feed__filter:hover, .feed__filter.active { background: var(--bg-elevated); color: var(--text-primary); }
+    .feed__item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      transition: background var(--fast) var(--ease);
+    }
+    .feed__item:last-child { border-bottom: none; }
+    .feed__item:hover { background: var(--bg-elevated); }
+
+    .feed__avatar {
+      width: 32px; height: 32px;
+      border-radius: var(--radius-sm);
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+      color: #fff;
+    }
+    .av--amber  { background: #b8760d; }
+    .av--green  { background: #2a9d6e; }
+    .av--blue   { background: #3b5fc0; }
+    .av--violet { background: #6b4fbb; }
+    .av--slate  { background: #3d4d66; }
+
+    .feed__content { flex: 1; min-width: 0; }
+    .feed__name {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .feed__sub { font-size: 12.5px; color: var(--text-secondary); margin-top: 1px; }
+    .feed__right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+    .feed__amount { font-size: 13.5px; font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .feed__time   { font-size: 11.5px; color: var(--text-muted); }
+    .feed__status { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .status--ok   { background: var(--green); }
+    .status--warn { background: var(--amber); }
+    .status--err  { background: var(--red); }
+
+    /* Sidebar panels */
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .panel__header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .panel__title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .panel__body  { padding: 16px 20px; }
+    .panel__row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .panel__row:last-child { border-bottom: none; }
+    .panel__row-label { color: var(--text-secondary); }
+    .panel__row-value { font-weight: 500; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+    .mini-bar { height: 4px; background: var(--bg-elevated); border-radius: 2px; overflow: hidden; margin-top: 8px; }
+    .mini-bar__fill { height: 100%; border-radius: 2px; background: var(--accent); }
+    .mini-bar__fill.green { background: var(--green); }
+    .mini-bar__fill.blue  { background: var(--blue); }
+
+    /* ─── Acceso ─────────────────────────────────────────────── */
+    .inputs-section { padding: 0 0 80px; }
+
+    /* ─── Footer ─────────────────────────────────────────────── */
+    .footer { border-top: 1px solid var(--border); padding: 32px 0; }
+    .footer__inner { display: flex; align-items: center; justify-content: space-between; }
+    .footer__copy  { font-size: 13px; color: var(--text-muted); }
+    .footer__links { display: flex; gap: 20px; }
+    .footer__link  { font-size: 13px; color: var(--text-muted); transition: color var(--fast) var(--ease); }
+    .footer__link:hover { color: var(--text-secondary); }
+
+    .divider { height: 1px; background: var(--border); margin: 0 0 80px; }
+
+    /* ─── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .hero { padding: 64px 0 56px; }
+      .hero__title { letter-spacing: -1.5px; }
+      .stats__grid { grid-template-columns: repeat(2, 1fr); }
+      .stat { padding: 12px 0; border-right: none; border-bottom: 1px solid var(--border); }
+      .stat:nth-child(3), .stat:last-child { border-bottom: none; }
+      .feed-layout { grid-template-columns: 1fr; }
+      .nav__links  { display: none; }
+      .footer__inner { flex-direction: column; gap: 16px; text-align: center; }
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 3px; }
+    ::selection { background: rgba(162,89,255,0.25); color: var(--text-primary); }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ───────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="container">
+    <div class="nav__inner">
+      <a href="/" class="nav__logo">
+        <div class="nav__logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 3h14l-7 9z"/><line x1="12" y1="12" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/>
+          </svg>
+        </div>
+        Bar
+      </a>
+      <ul class="nav__links">
+        <li><a class="nav__link active" href="#modulos">Módulos</a></li>
+        <li><a class="nav__link" href="#bebidas">Bebidas</a></li>
+        <li><a class="nav__link" href="#ventas">Ventas</a></li>
+        <li><a class="nav__link" href="#acceso">Acceso</a></li>
+      </ul>
+      <div class="nav__actions">
+        <span class="nav__badge">v1.0</span>
+        <a class="btn btn-primary btn-sm" href="/admin">Panel →</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ── HERO ─────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="container">
+    <div class="hero__eyebrow">Grupo 7 · Express + Docker</div>
+    <h1 class="hero__title">
+      Gestión del bar,<br/>
+      <span>de la barra a la caja.</span>
+    </h1>
+    <p class="hero__subtitle">
+      Administrá barras, el menú de bebidas y el registro de ventas desde un único panel.
+      Dockerizado, listo para producción.
+    </p>
+    <div class="hero__actions">
+      <a class="btn btn-primary btn-lg" href="/admin">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Ir al Panel
+      </a>
+      <a class="btn btn-secondary btn-lg" href="#modulos">Ver módulos</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── STATS ─────────────────────────────────────────────────── -->
+<section class="stats">
+  <div class="container">
+    <div class="stats__grid">
+      <div class="stat">
+        <div class="stat__value">4</div>
+        <div class="stat__label">Modelos Sequelize</div>
+      </div>
+      <div class="stat">
+        <div class="stat__value">2</div>
+        <div class="stat__label">Módulos de gestión</div>
+      </div>
+      <div class="stat">
+        <div class="stat__value">100%</div>
+        <div class="stat__label">CRUD automático</div>
+      </div>
+      <div class="stat">
+        <div class="stat__value">ES2023</div>
+        <div class="stat__label">Node 22 · Alpine</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CARDS ─────────────────────────────────────────────────── -->
+<section class="cards-section" id="modulos">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-header__tag">Módulos</div>
+      <h2 class="section-header__title">Todo el bar, cubierto.</h2>
+    </div>
+    <div class="cards-grid">
+
+      <div class="card" onclick="location.href='/admin/resources/Bebida'" id="bebidas">
+        <div class="card__header">
+          <div class="card__icon card__icon--amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14l-7 9z"/><line x1="12" y1="12" x2="12" y2="21"/><line x1="8" y1="21" x2="16" y2="21"/></svg>
+          </div>
+          <span class="card__tag tag--stable">Maestros</span>
+        </div>
+        <div class="card__title">Bebidas</div>
+        <div class="card__desc">Menú con nombre, precio y descripción de cada trago.</div>
+        <div class="card__meta">
+          <div>
+            <div class="card__count">10</div>
+            <div class="card__count-label">registros</div>
+          </div>
+          <div class="card__action">
+            Ver bebidas
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" onclick="location.href='/admin/resources/Barra'">
+        <div class="card__header">
+          <div class="card__icon card__icon--blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M3 10l2-5h14l2 5M5 10v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9"/></svg>
+          </div>
+          <span class="card__tag tag--stable">Maestros</span>
+        </div>
+        <div class="card__title">Barras</div>
+        <div class="card__desc">Puntos de venta del local con número y sector.</div>
+        <div class="card__meta">
+          <div>
+            <div class="card__count">4</div>
+            <div class="card__count-label">registros</div>
+          </div>
+          <div class="card__action">
+            Ver barras
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" onclick="location.href='/admin/resources/Venta'" id="ventas">
+        <div class="card__header">
+          <div class="card__icon card__icon--green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <span class="card__tag tag--new">Nuevo</span>
+        </div>
+        <div class="card__title">Ventas</div>
+        <div class="card__desc">Comprobantes con número, fecha, hora y total.</div>
+        <div class="card__meta">
+          <div>
+            <div class="card__count">40</div>
+            <div class="card__count-label">registros</div>
+          </div>
+          <div class="card__action">
+            Ver ventas
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" onclick="location.href='/admin/resources/DetalleVenta'">
+        <div class="card__header">
+          <div class="card__icon card__icon--muted">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          </div>
+          <span class="card__tag tag--default">Ventas</span>
+        </div>
+        <div class="card__title">Detalle de Ventas</div>
+        <div class="card__desc">Líneas que vinculan venta, bebida y barra con su subtotal.</div>
+        <div class="card__meta">
+          <div>
+            <div class="card__count">—</div>
+            <div class="card__count-label">registros</div>
+          </div>
+          <div class="card__action">
+            Ver detalle
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── FEED ──────────────────────────────────────────────────── -->
+<section class="feed-section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-header__tag">Carta</div>
+      <h2 class="section-header__title">Menú de bebidas.</h2>
+      <p class="section-header__sub">Catálogo activo con los precios vigentes del local.</p>
+    </div>
+    <div class="feed-layout">
+      <div class="feed">
+        <div class="feed__header">
+          <span class="feed__title">Carta de Bebidas</span>
+          <div class="feed__filters">
+            <button class="feed__filter active">Todas</button>
+            <button class="feed__filter">Con alcohol</button>
+            <button class="feed__filter">Sin alcohol</button>
+          </div>
+        </div>
+
+        <div class="feed__item">
+          <div class="feed__avatar av--amber">CR</div>
+          <div class="feed__content">
+            <div class="feed__name">Cerveza Rubia 500ml</div>
+            <div class="feed__sub">Lager nacional tirada</div>
+          </div>
+          <div class="feed__right">
+            <div class="feed__amount">$1,200</div>
+            <div class="feed__time">Precio vigente</div>
+          </div>
+          <div class="feed__status status--ok"></div>
+        </div>
+
+        <div class="feed__item">
+          <div class="feed__avatar av--violet">FC</div>
+          <div class="feed__content">
+            <div class="feed__name">Fernet con Coca</div>
+            <div class="feed__sub">Fernet Branca con Coca-Cola 330ml</div>
+          </div>
+          <div class="feed__right">
+            <div class="feed__amount">$1,500</div>
+            <div class="feed__time">Precio vigente</div>
+          </div>
+          <div class="feed__status status--ok"></div>
+        </div>
+
+        <div class="feed__item">
+          <div class="feed__avatar av--slate">WS</div>
+          <div class="feed__content">
+            <div class="feed__name">Whisky Simple</div>
+            <div class="feed__sub">Whisky blend con hielo</div>
+          </div>
+          <div class="feed__right">
+            <div class="feed__amount">$2,000</div>
+            <div class="feed__time">Precio vigente</div>
+          </div>
+          <div class="feed__status status--warn"></div>
+        </div>
+
+        <div class="feed__item">
+          <div class="feed__avatar av--green">AM</div>
+          <div class="feed__content">
+            <div class="feed__name">Agua Mineral 500ml</div>
+            <div class="feed__sub">Sin gas · sin alcohol</div>
+          </div>
+          <div class="feed__right">
+            <div class="feed__amount">$600</div>
+            <div class="feed__time">Precio vigente</div>
+          </div>
+          <div class="feed__status status--ok"></div>
+        </div>
+
+        <div class="feed__item">
+          <div class="feed__avatar av--blue">DB</div>
+          <div class="feed__content">
+            <div class="feed__name">Base de datos</div>
+            <div class="feed__sub">PostgreSQL · migrations aplicadas · seeders cargados</div>
+          </div>
+          <div class="feed__right">
+            <div class="feed__amount">4</div>
+            <div class="feed__time">Tablas activas</div>
+          </div>
+          <div class="feed__status status--ok"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="panel">
+          <div class="panel__header">
+            <span class="panel__title">Stack técnico</span>
+            <span class="card__tag tag--stable" style="font-size:11px;padding:2px 8px;">Online</span>
+          </div>
+          <div class="panel__body">
+            <div class="panel__row"><span class="panel__row-label">Runtime</span><span class="panel__row-value">Node.js 22</span></div>
+            <div class="panel__row"><span class="panel__row-label">Framework</span><span class="panel__row-value">Express 4</span></div>
+            <div class="panel__row"><span class="panel__row-label">ORM</span><span class="panel__row-value">Sequelize 6</span></div>
+            <div class="panel__row"><span class="panel__row-label">Base de datos</span><span class="panel__row-value">PostgreSQL</span></div>
+            <div class="panel__row"><span class="panel__row-label">Admin panel</span><span class="panel__row-value">AdminJS 7</span></div>
+            <div class="panel__row"><span class="panel__row-label">Infra</span><span class="panel__row-value">Docker Alpine</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel__header"><span class="panel__title">Cobertura de datos</span></div>
+          <div class="panel__body">
+            <div style="margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+                <span style="color:var(--text-secondary);">Bebidas</span>
+                <span style="color:var(--text-primary);font-weight:500;">10 registros</span>
+              </div>
+              <div class="mini-bar"><div class="mini-bar__fill" style="width:100%;"></div></div>
+            </div>
+            <div style="margin-bottom:14px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+                <span style="color:var(--text-secondary);">Barras</span>
+                <span style="color:var(--text-primary);font-weight:500;">4 registros</span>
+              </div>
+              <div class="mini-bar"><div class="mini-bar__fill blue" style="width:40%;"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;">
+                <span style="color:var(--text-secondary);">Ventas</span>
+                <span style="color:var(--text-primary);font-weight:500;">40 registros</span>
+              </div>
+              <div class="mini-bar"><div class="mini-bar__fill green" style="width:80%;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── ACCESO ─────────────────────────────────────────────────── -->
+<section class="inputs-section" id="acceso">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-header__tag">Acceso</div>
+      <h2 class="section-header__title">Panel de administración.</h2>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;max-width:900px;">
+
+      <div class="panel" style="border-radius:var(--radius-lg);">
+        <div class="panel__header">
+          <span class="panel__title">Credenciales</span>
+          <span class="card__tag tag--stable" style="font-size:11px;padding:2px 8px;">Por defecto</span>
+        </div>
+        <div class="panel__body">
+          <div class="panel__row">
+            <span class="panel__row-label">Email</span>
+            <span class="panel__row-value" style="font-family:var(--mono);font-size:12px;">admin@example.com</span>
+          </div>
+          <div class="panel__row">
+            <span class="panel__row-label">Contraseña</span>
+            <span class="panel__row-value" style="font-family:var(--mono);font-size:12px;">admin123</span>
+          </div>
+          <div class="panel__row">
+            <span class="panel__row-label">URL</span>
+            <a href="/admin" style="color:var(--accent);font-size:13px;font-family:var(--mono);">localhost:3000/admin</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="border-radius:var(--radius-lg);">
+        <div class="panel__header"><span class="panel__title">Stack técnico</span></div>
+        <div class="panel__body">
+          <div class="panel__row"><span class="panel__row-label">Runtime</span><span class="panel__row-value">Node.js 22</span></div>
+          <div class="panel__row"><span class="panel__row-label">Framework</span><span class="panel__row-value">Express 4</span></div>
+          <div class="panel__row"><span class="panel__row-label">ORM</span><span class="panel__row-value">Sequelize 6</span></div>
+          <div class="panel__row"><span class="panel__row-label">Base de datos</span><span class="panel__row-value">PostgreSQL</span></div>
+          <div class="panel__row"><span class="panel__row-label">Admin panel</span><span class="panel__row-value">AdminJS 7</span></div>
+        </div>
+      </div>
+
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;display:flex;flex-direction:column;justify-content:space-between;gap:20px;">
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">Ir al panel</div>
+          <div style="font-size:13.5px;color:var(--text-secondary);line-height:1.6;">CRUD completo sobre los 4 modelos. Búsqueda, filtros y validación incluidos.</div>
+        </div>
+        <a class="btn btn-primary" href="/admin" style="align-self:flex-start;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Abrir panel →
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────────────────── -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__inner">
+      <span class="footer__copy">Gestión de Bar · Grupo 7 · 2025</span>
+      <div class="footer__links">
+        <a class="footer__link" href="/admin">Panel Admin</a>
+        <a class="footer__link" href="#modulos">Módulos</a>
+        <a class="footer__link" href="https://expressjs.com/" target="_blank" rel="noopener">Express</a>
+        <a class="footer__link" href="https://sequelize.org/" target="_blank" rel="noopener">Sequelize</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Card hover spotlight effect
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+      card.style.setProperty('--my', `${e.clientY - r.top}px`);
+    });
+  });
+
+  // Feed filters
+  document.querySelectorAll('.feed__filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.closest('.feed__filters').querySelectorAll('.feed__filter').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
