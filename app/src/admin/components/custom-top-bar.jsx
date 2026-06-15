@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import styled from 'styled-components'
 import { useSelector } from 'react-redux'
+import { useHistory, useLocation } from 'react-router-dom'
 
 const Bar = styled.div`
   position: fixed;
@@ -120,30 +121,16 @@ const CustomTopBar = (props) => {
   const { toggleSidebar } = props
   const paths = useSelector((state) => state.paths)
 
+  const history  = useHistory()
+  const location = useLocation()
+
   useEffect(() => {
-    const stripRefresh = () => {
-      if (!window.location.search.includes('refresh=true')) return
-      const url = new URL(window.location.href)
-      url.searchParams.delete('refresh')
-      const qs = url.searchParams.toString()
-      window.history.replaceState(null, '', url.pathname + (qs ? `?${qs}` : ''))
-    }
-
-    const origPush = window.history.pushState.bind(window.history)
-    window.history.pushState = (...args) => {
-      origPush(...args)
-      window.dispatchEvent(new Event('_nav'))
-    }
-
-    window.addEventListener('_nav', stripRefresh)
-    window.addEventListener('popstate', stripRefresh)
-
-    return () => {
-      window.history.pushState = origPush
-      window.removeEventListener('_nav', stripRefresh)
-      window.removeEventListener('popstate', stripRefresh)
-    }
-  }, [])
+    const p = new URLSearchParams(location.search)
+    if (!p.has('refresh')) return
+    p.delete('refresh')
+    const qs = p.toString()
+    history.replace(location.pathname + (qs ? `?${qs}` : ''))
+  }, [location.search])
 
   const go = (id) => { window.location.href = `/admin/resources/${id}` }
   const logout = () => { window.location.href = paths?.logoutPath || '/admin/logout' }
