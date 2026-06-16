@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import styled from 'styled-components'
 import { useSelector } from 'react-redux'
-import { useHistory, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const Bar = styled.div`
   position: fixed;
@@ -121,7 +121,7 @@ const CustomTopBar = (props) => {
   const { toggleSidebar } = props
   const paths = useSelector((state) => state.paths)
 
-  const history  = useHistory()
+  const navigate = useNavigate()
   const location = useLocation()
 
   useEffect(() => {
@@ -129,7 +129,7 @@ const CustomTopBar = (props) => {
     if (!p.has('refresh')) return
     p.delete('refresh')
     const qs = p.toString()
-    history.replace(location.pathname + (qs ? `?${qs}` : ''))
+    navigate(location.pathname + (qs ? `?${qs}` : ''), { replace: true })
   }, [location.search])
 
   const go = (id) => { window.location.href = `/admin/resources/${id}` }
