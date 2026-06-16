@@ -24,7 +24,10 @@ const Components = {
 
 const safeDelete = async (request, response, context) => {
   const { record, resource, h, currentAdmin } = context;
-  const listUrl = h.resourceUrl({ resourceId: resource.id() });
+  // resource.id() devuelve el tableName de Sequelize (ej: 'barras').
+  // _decorated.id() respeta el `id:` configurado en AdminJS (ej: 'Barra').
+  const resourceId = resource._decorated?.id() ?? resource.id();
+  const listUrl = h.resourceUrl({ resourceId });
 
   // El borrado real solo ocurre en POST (el usuario confirmó). En GET devolvemos
   // el registro sin tocar nada.
