@@ -6,6 +6,9 @@ app/node_modules/
 .env
 app/.env
 *.env
+*.env.db
+app/.env.db
+.env*
 
 # Logs
 *.log
