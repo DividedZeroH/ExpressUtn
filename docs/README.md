@@ -178,3 +178,8 @@ ADMIN_PASSWORD=admin123
 | Node.js     | 18+            |
 | Docker      | 24+            |
 | npm         | 9+             |
+
+---
+
+## Colaboradores
+* **Antigravity** (Google DeepMind) - Redacción de guías técnicas, comentarios en modelos y automatización.
