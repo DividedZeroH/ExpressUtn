@@ -2,22 +2,19 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    // 1. Crear tabla barras
     await queryInterface.createTable('barras', {
       id:           { type: Sequelize.INTEGER, autoIncrement: true, primaryKey: true },
       numero_barra: { type: Sequelize.INTEGER, allowNull: false, unique: true },
       sector:       { type: Sequelize.STRING(100), allowNull: false },
     });
 
-    // 2. Crear tabla bebidas
     await queryInterface.createTable('bebidas', {
       id:          { type: Sequelize.INTEGER, autoIncrement: true, primaryKey: true },
-      nombre:      { type: Sequelize.STRING(200), allowNull: false },
+      nombre:      { type: Sequelize.STRING(200), allowNull: false, unique: true },
       precio:      { type: Sequelize.DECIMAL(15, 2), allowNull: false, defaultValue: 0 },
       descripcion: { type: Sequelize.TEXT, allowNull: true },
     });
 
-    // 3. Crear tabla ventas
     await queryInterface.createTable('ventas', {
       id:           { type: Sequelize.INTEGER, autoIncrement: true, primaryKey: true },
       numero_venta: { type: Sequelize.INTEGER, allowNull: false, unique: true },
@@ -26,7 +23,6 @@ module.exports = {
       total:        { type: Sequelize.DECIMAL(15, 2), allowNull: false, defaultValue: 0 },
     });
 
-    // 4. Crear tabla detalle_ventas (con Foreign Keys)
     await queryInterface.createTable('detalle_ventas', {
       id:       { type: Sequelize.INTEGER, autoIncrement: true, primaryKey: true },
       venta_id: {
