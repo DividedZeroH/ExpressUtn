@@ -1,55 +1,73 @@
-# Contexto del Proyecto para el Agente de IA
+# Contexto del Proyecto: Enfoque en ORM (Sequelize)
 
-Este documento resume la arquitectura del proyecto, la estructura actual del código y el estado del desarrollo tras la última sesión de trabajo. Copia y pega este contenido al iniciar una conversación con otro agente.
-
----
-
-## 1. Información General del Proyecto
-* **Nombre:** Sistema de Gestión de Bar (ExpressUtn)
-* **Tecnologías:** Node.js (ES Modules), Express, Sequelize ORM, AdminJS (panel de administración), PostgreSQL (corriendo en Docker).
-* **Repositorio de GitHub:** [https://github.com/DividedZeroH/ExpressUtn](https://github.com/DividedZeroH/ExpressUtn) (Rama activa: `main`).
+Este documento resume la arquitectura del modelo de datos de la aplicación y la gestión de la base de datos a través de Sequelize ORM. Copia y pega este contenido para dárselo a otro agente de IA al iniciar la sesión.
 
 ---
 
-## 2. Arquitectura de Datos y Modelos (Sequelize)
-El sistema gestiona la venta de tragos en barras físicas mediante los siguientes modelos en `app/src/models/`:
-1. **`Barra`** (`barra.js`): Mapea a la tabla `barras`. Registra `numero_barra` y `sector`. Convierte a mayúsculas el sector antes de guardar.
-2. **`Bebida`** (`bebida.js`): Mapea a la tabla `bebidas`. Registra `nombre`, `precio` y `descripcion`. Nota: el atributo `stock` está comentado en este modelo para un ejercicio práctico de la clase.
-3. **`Venta`** (`venta.js`): Mapea a la tabla `ventas`. Registra `numero_venta`, `fecha` (DATEONLY), `hora` (TIME) y `total`.
-4. **`DetalleVenta`** (`detalleventa.js`): Tabla intermedia para la venta de bebidas en barras. Registra `venta_id`, `bebida_id`, `barra_id`, `cantidad` y `subtotal`.
-5. **Inicializador (`index.js`)**: Levanta la conexión con la DB y configura las asociaciones de clave foránea (`belongsTo` y `hasMany`) entre los modelos.
+## 1. Stack Tecnológico del ORM
+* **Base de Datos:** PostgreSQL (ejecutada en contenedor Docker).
+* **Motor ORM:** Sequelize ORM (v6) integrado con ES Modules nativos de Node.js.
+* **Dialecto:** `postgres` con configuración centralizada en `app/src/config/database.cjs`.
+* **Configuración del CLI:** `.sequelizerc` mapea las carpetas de modelos, migraciones y seeders directamente dentro de la subcarpeta `app/src/`.
 
 ---
 
-## 3. Estado de la Base de Datos y Seguridad (Últimos Cambios)
-* **Seguridad de Credenciales:**
-  * Se configuró el archivo `.gitignore` en la raíz para ignorar todos los archivos de variables de entorno (`.env`, `.env.db`, `*.env.db`, `.env*`).
-  * El archivo `app/.env.db` fue removido del rastreo de Git (untrack/delete en GitHub) y permanece solo en local.
-  * Se actualizaron las credenciales locales a valores de desarrollo seguros:
-    * `POSTGRES_DB=bar_db`
-    * `POSTGRES_USER=bar_user`
-    * `POSTGRES_PASSWORD=secure_local_password_99`
-    * `ADMIN_EMAIL=admin@barexpress.utn`
-    * `ADMIN_PASSWORD=admin_utn_pass_123`
-* **Conexión de Red:**
-  * En local corre bajo el puerto **5433** (mapeado al 5432 del contenedor Docker) para evitar colisiones con instancias nativas de Postgres.
+## 2. Arquitectura de Modelos (`app/src/models/`)
+
+Todos los modelos están implementados bajo el patrón de funciones fábrica para recibir la instancia de conexión única de Sequelize y los tipos de datos lógicos (`DataTypes`).
+
+* **`Barra` (`barra.js`):**
+  * Tabla física: `barras`.
+  * Columnas: `numero_barra` (INTEGER, único, no nulo) y `sector` (STRING(100), no nulo).
+  * Hooks: `beforeSave` para formatear el valor de `sector` a letras mayúsculas antes de persistir en PostgreSQL.
+  * Timestamps deshabilitados.
+
+* **`Bebida` (`bebida.js`):**
+  * Tabla física: `bebidas`.
+  * Columnas: `nombre` (STRING(200), único, no nulo), `precio` (DECIMAL(15,2), no nulo, default 0), `descripcion` (TEXT, permite nulos).
+  * Nota: El mapeo del atributo `stock` (INTEGER, no nulo, default 0) está comentado en el archivo para fines de ejercicios prácticos.
+  * Hooks: `beforeSave` para convertir el campo `nombre` a mayúsculas antes de guardar.
+  * Timestamps deshabilitados.
+
+* **`Venta` (`venta.js`):**
+  * Tabla física: `ventas`.
+  * Columnas: `numero_venta` (INTEGER, único, no nulo), `fecha` (DATEONLY, no nulo), `hora` (TIME, no nulo) y `total` (DECIMAL(15,2), no nulo, default 0).
+  * Timestamps deshabilitados.
+
+* **`DetalleVenta` (`detalleventa.js`):**
+  * Tabla física: `detalle_ventas`.
+  * Columnas: `venta_id` (INTEGER, no nulo), `bebida_id` (INTEGER, no nulo), `barra_id` (INTEGER, no nulo), `cantidad` (INTEGER, no nulo, default 1) y `subtotal` (DECIMAL(15,2), no nulo, default 0).
+  * Timestamps deshabilitados.
 
 ---
 
-## 4. Estado de las Migraciones y Resolución de Errores
-* **El Problema Inicial:** Al correr `npx sequelize-cli db:migrate`, arrojaba el error `ERROR: relation "public.bebida" does not exist`.
-* **Causa:** El commit `a291e99` de la cátedra eliminó a propósito las migraciones iniciales (`001-initial.js` y `002-sessions.js`) para realizar un ejercicio práctico en clase. La base de datos estaba vacía, por lo que no existía la tabla `bebidas` al intentar agregar la columna `stock`.
-* **Solución Aplicada:**
-  1. Se recuperó la migración inicial del historial de Git y se guardó en `app/src/migrations/20260619234848-inicial.js` para recrear las tablas principales.
-  2. Se configuró la migración incremental del stock (`agregar-stock-bebidas`) para referenciar a la tabla correcta en plural (`bebidas`).
-  3. Los archivos locales de los modelos en `app/src/models/` fueron comentados minuciosamente para explicar cada tipo de dato y hook sin alterar su comportamiento operativo.
+## 3. Relaciones y Asociaciones (`app/src/models/index.js`)
+
+Las relaciones lógicas de clave foránea están centralizadas en el archivo indexador de modelos mediante asociaciones nativas de Sequelize:
+
+1. **Relación Venta <-> DetalleVenta (Uno a Muchos):**
+   * `Venta.hasMany(DetalleVenta, { foreignKey: 'venta_id', as: 'Detalle' })`
+   * `DetalleVenta.belongsTo(Venta, { foreignKey: 'venta_id', as: 'Venta' })`
+
+2. **Relación Bebida <-> DetalleVenta (Uno a Muchos):**
+   * `Bebida.hasMany(DetalleVenta, { foreignKey: 'bebida_id', as: 'Detalle' })`
+   * `DetalleVenta.belongsTo(Bebida, { foreignKey: 'bebida_id', as: 'Bebida' })`
+
+3. **Relación Barra <-> DetalleVenta (Uno a Muchos):**
+   * `Barra.hasMany(DetalleVenta, { foreignKey: 'barra_id', as: 'Detalle' })`
+   * `DetalleVenta.belongsTo(Barra, { foreignKey: 'barra_id', as: 'Barra' })`
 
 ---
 
-## 5. Documentación en la carpeta `docs/`
-Se creó una carpeta `docs/` que centraliza la documentación y ya fue subida a GitHub:
-* `docs/README.md`: Archivo README del proyecto principal.
-* `docs/README_Migraciones.md`: Guía de comandos Sequelize y ejemplos de migración.
-* `docs/Guia_Migraciones_Sequelize.md` y `.pdf`: Guía técnica detallada paso a paso sobre modelos, mapeo y el flujo de añadir columnas.
-* `docs/prompt_maestro_presentacion.md`: Prompt para generar presentaciones sobre ORMs y Sequelize.
-* `docs/contexto_para_agente.md`: Este mismo documento.
+## 4. Gestión del Esquema: Migraciones (`app/src/migrations/`)
+
+La evolución de la base de datos se maneja mediante scripts de migración ordenados por marcas de tiempo en el directorio `app/src/migrations/`:
+
+* **Migración Inicial (`YYYYMMDDHHMMSS-inicial.js`):**
+  * Utiliza `queryInterface.createTable` para generar la estructura física de las tablas en PostgreSQL: `barras`, `bebidas`, `ventas` y `detalle_ventas`.
+  * Define restricciones de base de datos (`allowNull: false`, `unique: true`), claves primarias autoincrementales (`autoIncrement: true`), y relaciones físicas de claves foráneas (`references` a nivel de base de datos) con reglas `onDelete: 'RESTRICT'`.
+  * Su método `down` revierte la creación eliminando las tablas con `queryInterface.dropTable` en el orden correcto para respetar la integridad referencial.
+
+* **Migración Incremental (`YYYYMMDDHHMMSS-agregar-stock-bebidas.js`):**
+  * Utiliza `queryInterface.addColumn` en el método `up` para añadir la columna `stock` (tipo `Sequelize.INTEGER`, no nula y con valor por defecto `0`) a la tabla física `bebidas`.
+  * Utiliza `queryInterface.removeColumn` en el método `down` para revertir la acción eliminando dicha columna.
