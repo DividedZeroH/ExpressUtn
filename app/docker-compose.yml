@@ -15,6 +15,22 @@ services:
     networks:
       - net
 
+  # Base NoSQL. Solo se usa cuando DB_DRIVER=mongoose. Levantarla con:
+  #   docker compose up -d --wait mongo
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: [ "CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - mongo-db:/data/db
+    networks:
+      - net
+
   backend:
     build: .
     command: node src/app.js
@@ -64,3 +80,4 @@ networks:
 
 volumes:
   postgres-db:
+  mongo-db:
