@@ -181,5 +181,4 @@ ADMIN_PASSWORD=admin123
 
 ---
 
-## Colaboradores
-* **Antigravity** (Google DeepMind) - Redacción de guías técnicas, comentarios en modelos y automatización.
+
