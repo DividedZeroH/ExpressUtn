@@ -19,11 +19,11 @@ export default (sequelize, DataTypes) => {
     // NOTA SOBRE EL STOCK:
     // Esta propiedad está comentada en el mapeo de Sequelize. Si la base de datos ya tiene la columna 'stock',
     // Sequelize la ignorará por completo. Para activarla, se debe descomentar este bloque tras correr la migración.
-    //   stock: {
-    //     type: DataTypes.INTEGER,
-    //     allowNull: false,
-    //     defaultValue: 0,
-    //  },
+    //  stock: {
+    //    type: DataTypes.INTEGER,
+    //    allowNull: false,
+    //    defaultValue: 0,
+    //},
     descripcion: {
       type: DataTypes.TEXT, // Mapea a una columna de tipo TEXT en PostgreSQL (sin límite de caracteres).
       allowNull: true,      // Permite valores NULL (campo opcional).

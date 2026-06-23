@@ -23,6 +23,7 @@ Thumbs.db
 
 # Claude Code (settings locales, no compartir)
 .claude/settings.local.json
+.claude/ 
 
 # Editor
 .vscode/
