@@ -3,12 +3,7 @@ node_modules/
 app/node_modules/
 
 # Variables de entorno (contienen credenciales)
-.env
-app/.env
-*.env
-*.env.db
-app/.env.db
-.env*
+*.md
 
 # Logs
 *.log

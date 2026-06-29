@@ -24,22 +24,7 @@ export async function getRepositories() {
 
   const driver = (process.env.DB_DRIVER || 'sequelize').toLowerCase();
 
-  switch (driver) {
-    case 'drizzle': {
-      const { default: createDrizzleRepositories } = await import('./drizzle/index.js');
-      repositories = createDrizzleRepositories();
-      break;
-    }
-    case 'mongoose': {
-      const { default: createMongooseRepositories } = await import('./mongoose/index.js');
-      repositories = await createMongooseRepositories();
-      break;
-    }
-    case 'sequelize':
-    default:
-      repositories = createSequelizeRepositories();
-      break;
-  }
+  repositories = createSequelizeRepositories();
 
   console.log(`Repositorios inicializados con driver: ${repositories.driver}`);
   return repositories;
