@@ -6,9 +6,22 @@
 // IMPORTANTE: opera sobre el campo numérico `id` (no sobre el ObjectId `_id`),
 // para mantener la misma semántica de identificadores que Sequelize. Así
 // `findById(1)`, las rutas `/api/recurso/1` y las FK enteras siguen funcionando.
+//
+// NOTA: las queries usan `.select('-_id')` para ocultar el ObjectId interno de
+// Mongo en las respuestas de la API REST. El schema ya no borra `_id` en toJSON
+// porque AdminJS necesita que esté presente al serializar records internamente.
 
 import BaseRepository from '../base.repository.js';
 import { nextId } from './counter.js';
+
+/** Devuelve un objeto plano sin `_id` ni `__v`. */
+function limpiar(doc) {
+  if (!doc) return doc;
+  const obj = typeof doc.toObject === 'function' ? doc.toObject() : { ...doc };
+  delete obj._id;
+  delete obj.__v;
+  return obj;
+}
 
 export default class MongooseRepository extends BaseRepository {
   constructor(model) {
@@ -25,27 +38,28 @@ export default class MongooseRepository extends BaseRepository {
   }
 
   async findAll({ where = {}, order, limit, offset } = {}) {
-    let query = this.model.find(where);
+    let query = this.model.find(where).select('-_id -__v');
     if (order)  query = query.sort(order);
     if (offset) query = query.skip(offset);
     if (limit)  query = query.limit(limit);
-    return query.exec();
+    return query.lean().exec();
   }
 
   async findById(id) {
     const n = this.#idNum(id);
     if (n === null) return null;
-    return this.model.findOne({ id: n }).exec();
+    return this.model.findOne({ id: n }).select('-_id -__v').lean().exec();
   }
 
   async findOne(where = {}) {
-    return this.model.findOne(where).exec();
+    return this.model.findOne(where).select('-_id -__v').lean().exec();
   }
 
   async create(data) {
     // Asigna id autoincremental si no viene explícito (paridad con el SERIAL de SQL).
     const id = data.id != null ? data.id : await nextId(this.coleccion);
-    return this.model.create({ ...data, id });
+    const doc = await this.model.create({ ...data, id });
+    return limpiar(doc);
   }
 
   async update(id, data) {
@@ -53,7 +67,8 @@ export default class MongooseRepository extends BaseRepository {
     if (n === null) return null;
     // No permitimos cambiar el id por el cuerpo del request.
     const { id: _omit, ...rest } = data;
-    return this.model.findOneAndUpdate({ id: n }, rest, { new: true }).exec();
+    const doc = await this.model.findOneAndUpdate({ id: n }, rest, { new: true }).select('-_id -__v').lean().exec();
+    return doc;
   }
 
   async delete(id) {
@@ -67,3 +82,4 @@ export default class MongooseRepository extends BaseRepository {
     return this.model.countDocuments(where).exec();
   }
 }
+

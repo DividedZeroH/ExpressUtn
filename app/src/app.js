@@ -14,12 +14,12 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DRIVER = (process.env.DB_DRIVER || 'sequelize').toLowerCase();
 
-// AdminJS solo soporta el adapter de Sequelize (se acopla a los modelos Sequelize
-// y a PostgreSQL). Con drivers NoSQL (mongoose) el panel /admin no está disponible;
+// AdminJS soporta Sequelize (PostgreSQL) y Mongoose (MongoDB).
+// Con otros drivers (ej: drizzle) el panel /admin no está disponible;
 // la API REST sí funciona contra cualquier driver vía la capa de repositorios.
-const ADMIN_HABILITADO = DRIVER === 'sequelize';
+const ADMIN_HABILITADO = DRIVER === 'sequelize' || DRIVER === 'mongoose';
 
-// ── Panel AdminJS (solo Sequelize) ────────────────────────────────────────────
+// ── Panel AdminJS (Sequelize / PostgreSQL) ────────────────────────────────────
 // Se monta de forma dinámica para no cargar Sequelize ni AdminJS cuando se usa Mongo.
 async function montarAdmin() {
   const session = (await import('express-session')).default;
@@ -67,16 +67,62 @@ async function montarAdmin() {
   return adminJs.options.rootPath;
 }
 
+// ── Panel AdminJS (Mongoose / MongoDB) ────────────────────────────────────────
+// Adapter @adminjs/mongoose + session store en memoria (no hay PostgreSQL en este modo).
+async function montarAdminMongoose() {
+  const session = (await import('express-session')).default;
+  const AdminJS = (await import('adminjs')).default;
+  const AdminJSExpress = (await import('@adminjs/express')).default;
+  const AdminJSMongoose = await import('@adminjs/mongoose');
+  const { connectMongoose } = await import('./repositories/mongoose/connection.js');
+  const { default: adminConfig } = await import('./admin/admin-mongoose.js');
+
+  AdminJS.registerAdapter(AdminJSMongoose);
+  await connectMongoose();
+
+  const adminJs = new AdminJS(adminConfig);
+
+  const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
+    adminJs,
+    {
+      authenticate: async (email, password) => {
+        if (
+          email === process.env.ADMIN_EMAIL &&
+          password === process.env.ADMIN_PASSWORD
+        ) {
+          return { email };
+        }
+        return null;
+      },
+      cookieName: 'adminjs',
+      cookiePassword: process.env.ADMIN_PASSWORD || 'secreto-cambiar-en-produccion',
+    },
+    null,
+    {
+      resave: false,
+      saveUninitialized: true,
+      secret: process.env.ADMIN_PASSWORD || 'secreto-cambiar-en-produccion',
+    }
+  );
+
+  app.use(adminJs.options.rootPath, adminRouter);
+  return adminJs.options.rootPath;
+}
+
 const start = async () => {
   try {
     let adminPath = null;
 
-    if (ADMIN_HABILITADO) {
+    if (DRIVER === 'sequelize') {
       adminPath = await montarAdmin();
+    } else if (DRIVER === 'mongoose') {
+      adminPath = await montarAdminMongoose();
+      // También inicializa los repositorios Mongoose para la API REST.
+      await getRepositories();
     } else {
-      // Inicializa la capa de datos (abre la conexión del driver elegido, ej. Mongo).
+      // Inicializa la capa de datos (abre la conexión del driver elegido).
       const repos = await getRepositories();
-      console.log(`Panel /admin deshabilitado para driver "${repos.driver}" (solo Sequelize).`);
+      console.log(`Panel /admin deshabilitado para driver "${repos.driver}" (solo Sequelize/Mongoose).`);
     }
 
     app.use(express.static(join(__dirname, 'public')));

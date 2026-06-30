@@ -15,18 +15,29 @@
 //   TIME    → String (HH:mm)  hooks beforeSave (UPPER) → setters del schema
 
 import mongoose from 'mongoose';
+import { nextId } from './counter.js';
 
 const { Schema, model, models } = mongoose;
 
-// Oculta `_id` y `__v` en la salida JSON, dejando solo el `id` numérico.
-// Replica la forma de respuesta de Sequelize (que devuelve `id`).
+// Oculta `__v` en la salida JSON.
+// NOTA: NO se borra `_id` aquí porque AdminJS (@adminjs/mongoose) serializa los
+// records con JSON.stringify → toJSON, y necesita `_id` para identificar cada
+// registro internamente. La API REST oculta `_id` en la capa de repositorios.
 function ocultarInternos(schema) {
   schema.set('toJSON', {
     versionKey: false,
-    transform: (_doc, ret) => {
-      delete ret._id;
-      return ret;
-    },
+  });
+}
+
+// Hook pre('save') que auto-genera el `id` numérico si no viene seteado.
+// Esto permite que tanto AdminJS (que opera directo sobre el modelo) como la
+// API REST (que pasa por MongooseRepository) creen documentos con id correcto.
+function agregarAutoId(schema, collectionName) {
+  schema.pre('save', async function (next) {
+    if (this.id == null) {
+      this.id = await nextId(collectionName);
+    }
+    next();
   });
 }
 
@@ -61,6 +72,12 @@ const detalleVentaSchema = new Schema({
   cantidad:  { type: Number, required: true, default: 1 },
   subtotal:  { type: Number, required: true, default: 0 },
 }, { collection: 'detalle_ventas', versionKey: false });
+
+// Registrar hooks de autoincremento y transformación JSON en todos los schemas.
+agregarAutoId(barraSchema, 'barras');
+agregarAutoId(bebidaSchema, 'bebidas');
+agregarAutoId(ventaSchema, 'ventas');
+agregarAutoId(detalleVentaSchema, 'detalle_ventas');
 
 [barraSchema, bebidaSchema, ventaSchema, detalleVentaSchema].forEach(ocultarInternos);
 
