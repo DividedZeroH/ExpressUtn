@@ -10,16 +10,16 @@ module.exports = {
     ]);
 
     await queryInterface.bulkInsert('bebidas', [
-      { id: 1,  nombre: 'COCA COLA',       precio: 1500.00, descripcion: 'Gaseosa cola 500ml'       },
-      { id: 2,  nombre: 'SPRITE',          precio: 1500.00, descripcion: 'Gaseosa lima limon 500ml' },
-      { id: 3,  nombre: 'AGUA MINERAL',    precio: 1000.00, descripcion: 'Agua sin gas 500ml'       },
-      { id: 4,  nombre: 'CERVEZA RUBIA',   precio: 2500.00, descripcion: 'Cerveza lager 500ml'      },
-      { id: 5,  nombre: 'CERVEZA NEGRA',   precio: 2800.00, descripcion: 'Cerveza stout 500ml'      },
-      { id: 6,  nombre: 'FERNET',          precio: 3000.00, descripcion: 'Fernet con cola'          },
-      { id: 7,  nombre: 'APEROL SPRITZ',   precio: 3500.00, descripcion: 'Aperol con espumante'     },
-      { id: 8,  nombre: 'VINO TINTO',      precio: 2000.00, descripcion: 'Copa de vino tinto'       },
-      { id: 9,  nombre: 'VINO BLANCO',     precio: 2000.00, descripcion: 'Copa de vino blanco'      },
-      { id: 10, nombre: 'JUGO DE NARANJA', precio: 1200.00, descripcion: 'Jugo natural exprimido'   },
+      { id: 1,  nombre: 'COCA COLA',       precio: 1500.00, descripcion: 'Gaseosa cola 500ml',       stock: 0 },
+      { id: 2,  nombre: 'SPRITE',          precio: 1500.00, descripcion: 'Gaseosa lima limon 500ml', stock: 0 },
+      { id: 3,  nombre: 'AGUA MINERAL',    precio: 1000.00, descripcion: 'Agua sin gas 500ml',       stock: 0 },
+      { id: 4,  nombre: 'CERVEZA RUBIA',   precio: 2500.00, descripcion: 'Cerveza lager 500ml',      stock: 0 },
+      { id: 5,  nombre: 'CERVEZA NEGRA',   precio: 2800.00, descripcion: 'Cerveza stout 500ml',      stock: 0 },
+      { id: 6,  nombre: 'FERNET',          precio: 3000.00, descripcion: 'Fernet con cola',          stock: 0 },
+      { id: 7,  nombre: 'APEROL SPRITZ',   precio: 3500.00, descripcion: 'Aperol con espumante',     stock: 0 },
+      { id: 8,  nombre: 'VINO TINTO',      precio: 2000.00, descripcion: 'Copa de vino tinto',       stock: 0 },
+      { id: 9,  nombre: 'VINO BLANCO',     precio: 2000.00, descripcion: 'Copa de vino blanco',      stock: 0 },
+      { id: 10, nombre: 'JUGO DE NARANJA', precio: 1200.00, descripcion: 'Jugo natural exprimido',   stock: 0 },
     ]);
 
     await queryInterface.bulkInsert('ventas', [
